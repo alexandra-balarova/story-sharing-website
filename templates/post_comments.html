@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="masthead" style="background-image: url('{% static "assets/img/library_wallpaper.jpg" %}')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="post-heading">
+                    <h1>{{ story.title }}</h1>
+                    <span class="meta">
+                        Posted by
+                        {% if is_own_story %}
+                            You on {{ story.created_at }} <a href="{% url 'edit-story' story.pk %}">- Edit story</a>
+                        {% else %}
+                            <a href="{% url 'user-profile' story.author.username %}">{{ story.author }}</a> on {{ story.created_at }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container mt-4" style="font-family: 'Segoe UI', system-ui, sans-serif;">
+    <h4>Comments</h4>
+    <div class="card mb-4 p-4">
+        {% if comments %}
+            {% for comment in comments %}
+                <div class="card mb-3 p-3 position-relative">
+
+                    <!-- ⋯ Options Button -->
+                    <button onclick="toggleOptions('{{ comment.pk }}')" class="btn btn-sm btn-light"
+                        style="position: absolute; top: 0.5rem; right: 0.5rem;">⋯</button>
+
+                    <!-- ⋯ Options Menu -->
+                    <div id="optionsCard-{{ comment.pk }}" class="card shadow mt-2"
+                        style="width: 150px; display: none; position: absolute; top: 2.5rem; right: 0; z-index: 1000;">
+                        <div class="card-body p-2">
+                            {% if request.user == comment.author or request.user.is_superuser %}
+                                <h6><a href="{% url 'delete' comment.pk %}" class="dropdown-item text-danger">Delete</a></h6>
+                            {% endif %}
+                            <h6><a href="{% url 'report' comment.pk %}" class="dropdown-item">Report</a></h6>
+                        </div>
+                    </div>
+
+                    <!-- Comment Content + Like -->
+                    <div style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <strong><a href="{% url 'user-profile' comment.author.username %}">@{{ comment.author }}:</a></strong> {{ comment.content }}
+
+                        <form method="post" action="{% url 'likes-comments' story.pk comment.pk %}" style="display:inline; font-weight: normal; font-size: 1rem; color: #666;">
+                            {{ comment.liked_by.all|length }}
+                            {% csrf_token %}
+                            <button type="submit" style="border:none; background:none;">
+                                {% if user.profile in comment.liked_by.all %}
+                                    <img src="{% static 'assets/red-heart-icon-shape-illustration-free-vector.jpg' %}" width="16" height="16" alt="Liked">
+                                {% else %}
+                                    <img src="{% static 'assets/free-heart-icon-3510-thumb.png' %}" width="16" height="16" alt="Like">
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Reply + Show Replies -->
+                    <div class="mt-2">
+                        <a href="javascript:void(0);" onclick="toggleVisibility('reply-form-{{ comment.id }}')" class="me-2">Reply</a>
+                        {% if comment.replies.count > 0 %}
+                            <a href="javascript:void(0);" onclick="toggleVisibility('replies-{{ comment.id }}')">| Show replies</a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Reply Form -->
+                    <div id="reply-form-{{ comment.id }}" style="display:none; margin-top: 1rem;">
+                        <form method="post" action="{% url 'reply' story.pk comment.pk %}?next=comment-page">
+                            {% csrf_token %}
+                            <textarea name="content" rows="3" cols="50" placeholder="Write your reply here..." class="form-control"></textarea>
+                            <button type="submit" class="btn btn-sm btn-primary mt-2">Submit Reply</button>
+                        </form>
+                    </div>
+
+                    <!-- Replies -->
+                    <div id="replies-{{ comment.id }}" style="display:none; margin-top: 1rem;">
+                        {% for reply in comment.replies.all %}
+                            <div class="card mb-2 p-2 position-relative" style="margin-left: 1rem;">
+
+                                <!-- ⋯ Options Button -->
+                                <button onclick="toggleOptions('{{ reply.pk }}')" class="btn btn-sm btn-light"
+                                    style="position: absolute; top: 0.5rem; right: 0.5rem;">⋯</button>
+
+                                <!-- ⋯ Options Menu -->
+                                <div id="optionsCard-{{ reply.pk }}" class="card shadow mt-2"
+                                    style="width: 150px; display: none; position: absolute; top: 2.5rem; right: 0; z-index: 1000;">
+                                    <div class="card-body p-2">
+                                        {% if request.user == reply.author or request.user.is_superuser %}
+                                            <h6><a href="{% url 'delete-comments' story.pk reply.pk %}" class="dropdown-item text-danger">Delete</a></h6>
+                                        {% endif %}
+                                        <h6><a href="{% url 'report-comments' story.pk reply.pk %}" class="dropdown-item">Report</a></h6>
+                                    </div>
+                                </div>
+
+                                <!-- Reply Content + Like -->
+                                <div style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                    <strong><a href="{% url 'user-profile' reply.author.username %}">@{{ reply.author }}:</a></strong> {{ reply.content }}
+
+                                    <form method="post" action="{% url 'likes-comments' story.pk reply.pk %}" style="display:inline; font-weight: normal; font-size: 1rem; color: #666;">
+                                        {{ reply.liked_by.all|length }}
+                                        {% csrf_token %}
+                                        <button type="submit" style="border:none; background:none;">
+                                            {% if user.profile in reply.liked_by.all %}
+                                                <img src="{% static 'assets/red-heart-icon-shape-illustration-free-vector.jpg' %}" width="16" height="16" alt="Liked">
+                                            {% else %}
+                                                <img src="{% static 'assets/free-heart-icon-3510-thumb.png' %}" width="16" height="16" alt="Like">
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Be the first to comment.</p>
+        {% endif %}
+
+        <!-- New Comment Form -->
+        <form method="post" action="{% url 'comment-page' story.pk %}">
+            {% csrf_token %}
+            <textarea name="content" rows="3" cols="50" placeholder="Share your thoughts..." class="form-control"></textarea>
+            <button type="submit" class="btn btn-primary mt-3">Post</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleVisibility(id) {
+        const el = document.getElementById(id);
+        el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+    }
+
+    function toggleOptions(pk) {
+        const el = document.getElementById(`optionsCard-${pk}`);
+        el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <!-- Page Header-->
+    <header class="masthead" style="background-image: url('{% static 'assets/img/writing.jpeg' %}')">
+        <div class="container position-relative px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-md-10 col-lg-8 col-xl-7">
+                    <div class="page-heading">
+                        <h1>{% if object %}Update Story{% else %}New Story{% endif %}</h1>
+                        <span class="subheading">Share your thoughts with the world</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content-->
+{% load crispy_forms_tags %}
+
+<div class="container mt-4" style="font-family: 'Segoe UI', system-ui, sans-serif">
+    <h2>{% if object %}Edit{% else %}Create{% endif %} Chapter</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5>Story Details</h5>
+            </div>
+            <div class="card-body">
+                {{ form.title|as_crispy_field }}
+                {{ form.content|as_crispy_field }}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            {% if object %}Update{% else %}Create{% endif %} Chapter
+        </button>
+    
+        <a href="{% if object %}{% url 'story-detail' object.pk %}{% else %}{% url 'home-page' %}{% endif %}" 
+           class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+
+
+{% endblock %}

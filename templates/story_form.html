@@ -1,0 +1,103 @@
+    {% extends "base.html" %}
+    {% load crispy_forms_filters %}
+    {% load crispy_forms_tags %}
+    {% load static %}
+
+    {% block content %}
+    <!-- Page Header -->
+    <header class="masthead" style="background-image: url('{% static 'assets/img/writing.jpeg' %}')">
+        <div class="container position-relative px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-md-10 col-lg-8 col-xl-7">
+                    <div class="page-heading">
+                        <h1>{% if object %}Update Story{% else %}New Story{% endif %}</h1>
+                        <span class="subheading">Share your thoughts with the world</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mt-4" style="font-family: 'Segoe UI', system-ui, sans-serif">
+        <h2>{% if object %}Edit{% else %}Create{% endif %} Story</h2>
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5>Story Details</h5>
+                </div>
+                <div class="card-body">
+                    {{ form.title|as_crispy_field }}
+                    {{ form.synopsis|as_crispy_field }}
+                    {{ form.public|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5>Categories</h5>
+                </div>
+                <div class="card-body">
+                    {{ form.genres|as_crispy_field }}
+                    {{ form.tags|as_crispy_field }}
+                    {{ form.warnings|as_crispy_field }}
+                    {{ form.fandoms|as_crispy_field }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                {% if object %}Update{% else %}Create{% endif %} Story
+            </button>
+            <a href="{% if story %}{% url 'story-detail' story.pk %}{% else %}{% url 'home-page' %}{% endif %}"
+               class="btn btn-secondary">Cancel</a>
+        </form>
+     {% if story.pk %}
+                <div class="card mb-4" style="margin-top: 20px">
+                    <div class="card-header bg-primary text-white">
+                        <h5>Chapters</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            {% for chapter in story.chapters.all %}
+                                <li style="display: flex; align-items: center; gap: 0.4rem;">
+                                    <a href="{% url 'chapter-edit' story.pk chapter.pk %}">{{ chapter.title }}</a>
+                                    {% if not chapter.public %}
+                                        <img src="{% static 'assets/lock-icon.png' %}" width="16" height="16" alt="Private chapter">
+                                        {% if chapter.story.public %}
+                                            <form method="post" action="{% url 'publish-chapter' story.pk chapter.pk %}" style="display:inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-primary">
+                                                    Publish
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        {% else %}
+                                            {% if chapter.story.public %}
+                                        <form method="post" action="{% url 'private-chapter' story.pk chapter.pk %}" style="display:inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                Make Private
+                                            </button>
+                                        </form>
+                                            {% endif %}
+                                         {% endif %}
+
+                                    <form method="post" action="{% url 'delete-chapter' story.pk chapter.pk %}" style="display:inline">
+                                        {% csrf_token %}
+                                        <button type="submit" style="border:none; background:none;">
+                                            <img src="{% static 'assets/free-trash-icon.png' %}" width="16" height="16" alt="Delete Post">
+                                        </button>
+                                    </form>
+                                </li>
+                            {% empty %}
+                                No chapters yet.
+                            {% endfor %}
+                        </ul>
+                        <a href="{% url 'chapter-add' story.pk %}" class="btn btn-primary">Add Chapter</a>
+                    </div>
+                </div>
+            {% endif %}
+
+    </div>
+    {% endblock %}

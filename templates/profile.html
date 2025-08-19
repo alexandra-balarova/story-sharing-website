@@ -1,0 +1,269 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+            <!-- Page Header-->
+        <header class="masthead" style="background-image: url('{% static "assets/img/writing.jpeg" %}')">
+            <div class="container position-relative px-4 px-lg-5">
+                <div class="row gx-4 gx-lg-5 justify-content-center">
+                    <div class="col-md-10 col-lg-8 col-xl-7">
+                        <div class="site-heading">
+                            <h1>{{ profile_user.username }}</h1>
+                            <span class="subheading">
+                                {% if profile.bio %}
+                                    <p>{{ profile.bio }}</p>
+                                {% elif is_own_profile %}
+                                    <p>You haven't added a bio yet.</p>
+                                {% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Main Content-->
+
+                <!-- Profile Card -->
+                <div class="card mb-4" style="padding: 20px">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <!-- Profile Picture Placeholder -->
+                            <div class="flex-shrink-0 me-3">
+                                {% if profile.profile_picture %}
+                                    <img src="{{ profile.profile_picture.url }}"
+                                         alt="{{ profile_user.username }}'s Profile Picture"
+                                         class="rounded-circle"
+                                         style="width: 100px; height: 100px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-light"
+                                         style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-user fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                        {{ profile.name|default:profile_user.username }}
+                                        {% if not is_own_profile %}
+                                        <form method="post" action="{% url 'follow' profile_user.username %}" style="display: inline-flex; align-items: center; gap: 6px;">
+                                            {% csrf_token %}
+                                            {% if request.user.profile in profile.followers.all %}
+                                            <button
+                                                type="submit" style="padding: 4px 12px;border-radius: 15px;
+                                                    border: 1px solid  #24a0ed;
+                                                    background: #24a0ed;
+                                                    color: white;
+                                                    font-size: 14px;font-weight: 500;cursor: pointer;">
+                                                    Unfollow
+
+                                            </button>
+                                                {% else %}
+                                                <button
+                                                type="submit" style="padding: 4px 12px;border-radius: 15px;
+                                                    border: 1px solid #1a1e21 ;
+                                                    background: white;
+                                                    color: #1a1e21;
+                                                    font-size: 14px;font-weight: 500;cursor: pointer;">
+                                                    Follow
+
+                                            </button>
+                                                 {% endif %}
+                                        </form>
+                                        {% endif %}
+                                    </h2>
+                                <p class="text-muted">{{ profile_user.email }}</p>
+                                
+                                
+                           <div style="display: flex; align-items: center; gap: 2rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;"
+                                 aria-label="Stories: {{ stories.count }} published"
+                                 title="Total stories published">
+                                    <i class="fas fa-book" style="color: #666;"></i>
+                                    <div>
+                                        <h5 style="margin: 0;">{{ stories.count }}</h5>
+                                    </div>
+                                </div>
+                                   <div style="display: flex; align-items: center; gap: 0.5rem;"
+                                         aria-label="Bookmarks: {{ bookmarks.count }} saved"
+                                         title="Total bookmarks saved">
+                                        <i class="fas fa-bookmark" style="color: #666;"></i>
+                                        <div>
+                                            <h5 style="margin: 0;">{{ bookmarks.count }}</h5>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;"
+                                    aria-label="Followers: {{ profile.followers.count }}"
+                                    title="Total followers">
+                                        <i class="fas fa-users" style="color: #666;"></i>
+                                    <div>
+                                        <h5 style="margin: 0;">{{ profile.followers.count }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if is_own_profile %}
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 20px">
+                                <div style="display: flex; align-items: center;">
+                                        <a href="{% url 'edit-profile' %}" class="btn btn-outline-secondary btn-sm" >
+                                            Edit Profile
+                                        </a>
+                                </div>
+                                <div style="display: flex; align-items: center;">
+                                      <form method="post" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                           <button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button>
+                                    </form>
+                                </div>
+                                </div>
+                            {% endif %}
+                            </div>
+                                
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stories Section -->
+                <div class="mb-5" style="padding: 20px">
+                    <h3 class="mb-4 border-bottom pb-2">Stories</h3>
+                    {% if stories %}
+                        <div class="row">
+                            {% for story in stories %}
+
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <a href="{% url 'story-detail' story.id %}">
+
+                                                <h4 class="card-title">{{ story.title }}</h4>
+                                                <h6 class = "post-subtitle" style="color: #6c757d; font-weight: 400;">
+                                               {% if story.fandoms.all|length > 0 %}
+                                               Fandom:
+                                                   {% for fandom in story.fandoms.all %}
+                                                   {{ fandom }}{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}</h6>
+                                                   {% endif %}
+                                                 <h5 class = "post-subtitle" style="font-weight: 300; color: #6c757d">
+                                                    {{ story.synopsis|truncatewords:20 }}
+                                                </h5>
+                                                 <h6>
+                                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                                        {% for genre in story.genres.all %}
+                                                            <span class="badge bg-secondary">{{ genre.name }}</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                 </h6>
+                                                <h6>
+                                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                                    {% for warning in story.warnings.all %}
+                                                        <span class="badge bg-danger">{{ warning.name }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            </h6>
+                                         </a>
+                                        </div>
+                                        <div class="card-footer bg-transparent">
+                                            {% if is_own_profile %}
+                                            <a href="{% url 'edit-story' story.id %}" class="btn btn-sm btn-outline-primary">
+                                                Edit Story
+                                            </a>
+                                            <form method="post" action="{% url 'delete' story.pk %}" style="display:inline">
+                                                {% csrf_token %}
+                                                <button type="submit" style="border:none; background:none;">
+                                                    <img src="{% static 'assets/free-trash-icon.png' %}" width="24" height="24" alt="Delete Post">
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info" style="font-family: 'Segoe UI', system-ui, sans-serif">
+                            {% if is_own_profile %}
+                                You haven't written any stories yet. 
+                                <a href="{% url 'create-story' %}" class="alert-link">Write your first story</a>
+                            {% else %}
+                                This user hasn't written any stories yet.
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Bookmarks Section (only shown on own profile) -->
+                {% if is_own_profile and bookmarks %}
+                    <div class="mb-5" style="padding: 20px">
+                        <h3 class="mb-4 border-bottom pb-2">Bookmarks</h3>
+                        <div class="row">
+                        <div class="post-preview">
+                            {% for story in bookmarks %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                        <a href="{% url 'story-detail' story.id %}">
+                                            <h4 class="card-title">{{ story.title }}</h4>
+                                        <h6 class = "post-subtitle" style="color: #6c757d; font-weight: 300;">
+                                           {% if story.fandoms.all|length > 0 %}
+                                           Fandom:
+                                               {% for fandom in story.fandoms.all %}
+                                               {{ fandom }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}</h6>
+                                               {% endif %}
+                                             <h5 class = "post-subtitle" style="font-weight: 300; color: #6c757d">
+                                                {{ story.synopsis|truncatewords:20 }}
+                                            </h5>
+                                        <i><p class="post-meta" style="font-weight: 400; font-size: smaller; color: #6c757d">
+                                            Posted by
+                                                <a href="#!" style="color: black">{{ story.author }}</a>
+                                                on {{ story.created_at }}
+                                        </p></i>
+                                        <h6>
+                                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                                {% for genre in story.genres.all %}
+                                                    <span class="badge bg-secondary">{{ genre.name }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </h6>
+                                            <h6>
+                                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                                {% for warning in story.warnings.all %}
+                                                    <span class="badge bg-danger">{{ warning.name }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </h6>
+                                        </a>
+                                        </div>
+                                              <div class="card-footer bg-transparent">
+                                                <a href="" class="btn btn-sm btn-outline-danger">
+                                                    Remove
+                                                </a>
+                                                                          
+                                                    <div style="position: relative; display: inline-block;">
+                                                        <h6 style="margin: 0; font-weight: bolder; font-size: 1rem; color: #666; display: flex; align-items: center; gap: 0.5rem;">
+                                                            <button onclick="toggleOptions('{{ story.pk }}')" class="btn btn-sm btn-light options-toggle" style="padding: 2px 8px;">⋯</button>
+                                                        </h6>
+                                                        
+                                                        <div id="optionsCard-{{ story.pk }}" class="options-card card shadow mt-2" style="width: 150px; display: none; position: absolute; right: 0; z-index: 1000;">
+                                                            <div class="card-body p-2">
+                                                                {% if request.user == story.author %}
+                                                                    <h6><a href="{% url 'edit-story' story.pk %}" class="dropdown-item text-dark mb-1">Edit</a></h6>
+                                                                    <h6><a href="{% url 'delete' story.pk %}" class="dropdown-item text-danger mb-1">Delete</a></h6>
+                                                                {% elif request.user.is_superuser %}
+                                                                    <h6><a href="{% url 'delete' story.pk %}" class="dropdown-item text-danger mb-1">Delete</a></h6>
+                                                                {% endif %}
+                                                                    <h6><a href="#" class="dropdown-item mb-1">Report</a></h6>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                              </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        </div>
+                    </div>
+                {% endif %}
+     
+{% endblock %}

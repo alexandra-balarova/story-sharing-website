@@ -1,0 +1,124 @@
+    {% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+            <!-- Page Header-->
+        <header class="masthead" style="background-image: url('{% static "assets/img/library_wallpaper.jpg" %}')">
+            <div class="container position-relative px-4 px-lg-5">
+                <div class="row gx-4 gx-lg-5 justify-content-center">
+                    <div class="col-md-10 col-lg-8 col-xl-7">
+                        <div class="site-heading">
+                            <h1>Black Lodge</h1>
+                            <span class="subheading">Writers around the world</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Main Content-->
+        <button id="filterToggleBtn" class="btn btn-outline-primary ms-3" type="button">
+            <i class="fas fa-search"></i> Advanced Filter
+          </button>
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+             <div id="AdvancedFilter" class="card mx-auto mt-3 shadow" style="max-width: 600px; display: none;">
+              <div class="card-body">
+                <form method="get" action="." >
+                          <h5> {{ form.query }}</h5>
+
+                            <fieldset>
+                                <legend><h5>Exclude Warnings</h5></legend>
+                                <h6 > {{form.warnings }}</h6>
+                            </fieldset>
+
+                            <fieldset>
+                                <legend><h5>Exclude Genres</h5></legend>
+                                <h6>{{ form.genres }}</h6>
+                            </fieldset>
+
+                            <button class = "btn btn-outline-primary" style="padding: 5px; " type="submit">Search</button>
+                    </form>
+              </div>
+             </div>
+            </div>
+
+    <hr>
+<div class="container px-4 px-lg-5">
+    <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">
+        {% for story in stories %}
+            <!-- Post preview-->
+            <div class="post-preview">
+              <a href="{% url 'story-detail' story.pk %}">
+                <div class="title-genre-wrapper" style="display: flex; justify-content: space-between; align-items: center;">
+
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <h2 class="post-title" style="margin: 0;">{{ story.title }}</h2>
+                    <h6>
+                      <span class="genres" style="font-weight: normal; font-size: 1rem; color: #666; display: flex; gap: 0.25rem;">
+                        {% for genre in story.genres.all %}
+                          <span class="badge bg-secondary">{{ genre.name }}</span>
+                        {% endfor %}
+                      </span>
+                    </h6>
+                  </div>
+
+                  <h6 style="margin: 0; font-weight: normal; font-size: 1rem; color: #666; display: flex; align-items: center; gap: 0.5rem;">
+                    {{ story.bookmarked_by.all|length }}
+                    <img src="{% static 'assets/bookmark-icon-vector-empty.jpg' %}" width="16" height="16" alt="Bookmarked">
+
+                    {{ story.liked_by.all|length }}
+                    <img src="{% static 'assets/free-heart-icon-3510-thumb.png' %}" width="16" height="16" alt="Liked">
+                  </h6>
+
+                </div>
+                <h6 class="post-subtitle" style="color: #6c757d">
+                  {% if story.fandoms.all|length > 0 %}
+                    Fandom:
+                    {% for fandom in story.fandoms.all %}
+                      {{ fandom }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                </h6>
+                <h5 class="post-subtitle">{{ story.synopsis }}</h5>
+                <h6 class="post-subtitle">
+                  <div class="d-flex flex-wrap gap-1 mb-2">
+                    {% for tag in story.tags.all %}
+                      <span class="badge bg-primary">#{{ tag.name }}</span>
+                    {% endfor %}
+                  </div>
+                </h6>
+              <h6 class="post-subtitle">
+               <div class="d-flex flex-wrap gap-1 mb-2">
+                    {% for warning in story.warnings.all %}
+                        <span class="badge bg-danger"> {{ warning.name }}</span>
+                    {% endfor %}
+                </div>
+              </h6>
+              </a>
+              <p class="post-meta">
+                Posted by
+                <a href="#!">{{ story.author }}</a>
+                on {{ story.created_at }}
+              </p>
+            </div>
+            <!-- Divider-->
+            <hr class="my-4" />
+        {% empty %}
+            <p>No stories match your search :(</p>
+        {% endfor %}
+                    <div class="d-flex justify-content-end mb-4"><a class="btn btn-primary text-uppercase" href="#!">View more stories →</a></div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer-->
+    <script>
+     document.getElementById('filterToggleBtn').addEventListener('click', function() {
+    const filter = document.getElementById('AdvancedFilter');
+    if (filter.style.display === 'none' || !filter.style.display) {
+      filter.style.display = 'block';
+      filter.scrollIntoView({ behavior: 'smooth' }); // scroll to card on show
+    } else {
+      filter.style.display = 'none';
+    }
+  });
+    </script>
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Page Header-->
+<header class="masthead" style="background-image: url('{% static "assets/img/library_wallpaper.jpg" %}')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="site-heading">
+                    <h1>Black Lodge</h1>
+                    <span class="subheading">Writers around the world</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content-->
+<button id="searchToggleBtn" class="btn btn-outline-primary ms-3" type="button">
+    <i class="fas fa-search"></i> Search
+</button>
+
+<div id="searchCard" class="card mx-auto mt-3 shadow" style="max-width: 600px; display: none;">
+    <div class="card-body">
+        <form method="get" action="{% url 'story-search' %}">
+            <div class="input-group">
+                <h5><input type="text" name="query" class="form-control" placeholder="Search by title, author, tag, fandom..."></h5>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<hr>
+
+<div class="row gx-4 gx-lg-5 justify-content-center">
+    <div class="container px-4 px-lg-5">
+        <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">
+            {% for story in stories %}
+                {% if story.public %}
+                <!-- Post preview-->
+                <div class="post-preview">
+                    <a href="{% url 'story-detail' story.pk %}">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <h2 class="post-title" style="margin: 0;">{{ story.title }}</h2>
+                                <h6>
+                                    <span class="genres" style="font-weight: normal; font-size: 1rem; color: #666; display: flex; gap: 0.25rem;">
+                                        {% for genre in story.genres.all %}
+                                            <span class="badge bg-secondary">{{ genre.name }}</span>
+                                        {% endfor %}
+                                    </span>
+                                </h6>
+                            </div>
+                            
+                            <h6 style="margin: 0; font-weight: normal; font-size: 1rem; color: #666; display: flex; align-items: center; gap: 0.5rem;">
+                            <form method="post" action="{% url 'likes' story.pk %}" style="display:inline">
+                            {{ story.liked_by.all|length }}
+                                {% csrf_token %}
+                                <button type="submit" style="border:none; background:none;">
+                                    {% if user.profile in story.liked_by.all %}
+                                        <img src="{% static 'assets/red-heart-icon-shape-illustration-free-vector.jpg' %}" width="16" height="16" alt="Liked">
+                                    {% else %}
+                                        <img src="{% static 'assets/free-heart-icon-3510-thumb.png' %}" width="16" height="16" alt="Like">
+                                    {% endif %}
+                                </button>
+                            </form>
+                            {{ story.bookmarked_by.all|length }}
+                               <form method="post" action="{% url 'bookmarks' story.pk %}" style="display:inline">
+                                    {% csrf_token %}
+                                    <button type="submit" style="border:none; background:none;">
+                                        {% if user.profile in story.bookmarked_by.all %}
+                                            <img src="{% static 'assets/bookmark-icon-vector-full.jpg' %}" width="16" height="16" alt="Bookmarked">
+                                        {% else %}
+                                            <img src="{% static 'assets/bookmark-icon-vector-empty.jpg' %}" width="16" height="16" alt="Bookmark">
+                                        {% endif %}
+                                    </button>
+                                </form>                
+                            </h6>
+                        </div>
+                        
+                        <h6 class="post-subtitle" style="color: #6c757d">
+                            {% if story.fandoms.all|length > 0 %}
+                            Fandom:
+                                {% for fandom in story.fandoms.all %}
+                                {{ fandom }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </h6>
+                            {% endif %}
+                        
+                        <h5 class="post-subtitle" style="color: #6c757d">{{ story.synopsis|truncatewords:200}}</h5>
+                        
+                        <h6 class="post-subtitle">
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                {% for tag in story.tags.all %}
+                                    <span class="badge bg-primary"> #{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </h6>
+                        
+                        <h6 class="post-subtitle">
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                {% for warning in story.warnings.all %}
+                                    <span class="badge bg-danger"> {{ warning.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </h6>
+                    </a>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <i><p class="post-meta" style="font-weight: 400; font-size: smaller; color: #6c757d">
+                            Posted by
+                            <a href="{% url 'user-profile' story.author %}" style="color: black">{{ story.author }}</a>
+                            on {{ story.created_at }}
+                        </p></i>
+                        
+                        <div style="position: relative; display: inline-block;">
+                            <h6 style="margin: 0; font-weight: bolder; font-size: 1rem; color: #666; display: flex; align-items: center; gap: 0.5rem;">
+                                <button onclick="toggleOptions('{{ story.pk }}')" class="btn btn-sm btn-light options-toggle" style="padding: 2px 8px;">⋯</button>
+                            </h6>
+                            
+                            <div id="optionsCard-{{ story.pk }}" class="options-card card shadow mt-2" style="width: 150px; display: none; position: absolute; right: 0; z-index: 1000;">
+                                <div class="card-body p-2">
+                                    {% if request.user == story.author %}
+                                        <h6><a href="{% url 'edit-story' story.pk %}" class="dropdown-item text-dark mb-1">Edit</a></h6>
+                                        <h6><a href="{% url 'delete' story.pk %}" class="dropdown-item text-danger mb-1">Delete</a></h6>
+                                    {% elif request.user.is_superuser %}
+                                        <h6><a href="{% url 'delete' story.pk %}" class="dropdown-item text-danger mb-1">Delete</a></h6>
+                                    {% endif %}
+                                        <h6><a href="{% url 'report' story.pk %}" class="dropdown-item mb-1">Report</a></h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Divider-->
+                <hr class="my-4" />
+                {% endif %}
+            {% empty %}
+                <p style="font-family: 'Segoe UI', system-ui, sans-serif">No published stories yet.</p>
+            {% endfor %}
+            
+            <!-- Pager-->
+            <div class="d-flex justify-content-end mb-4">
+                {% if stories.has_previous %}
+                        <a class="btn btn-outline-primary" href="?page={{ stories.previous_page_number }}">← Previous</a>
+                    {% else %}
+                        <div></div>
+                    {% endif %}
+                
+                    {% if stories.has_next %}
+                        <a class="btn btn-primary text-uppercase" href="?page={{ stories.next_page_number }}">View more stories →</a>
+                    {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search toggle functionality
+    document.getElementById('searchToggleBtn').addEventListener('click', function() {
+        const searchCard = document.getElementById('searchCard');
+        if (searchCard.style.display === 'none' || !searchCard.style.display) {
+            searchCard.style.display = 'block';
+            searchCard.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            searchCard.style.display = 'none';
+        }
+    });
+
+    // Options toggle functionality
+    function toggleOptions(postId) {
+        const card = document.getElementById(`optionsCard-${postId}`);
+        // Close all other option cards first
+        document.querySelectorAll('.options-card').forEach(el => {
+            if (el.id !== `optionsCard-${postId}`) el.style.display = 'none';
+        });
+        // Toggle the current one
+        card.style.display = card.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Close options cards when clicking anywhere else
+    document.addEventListener('click', function(e) {
+        if (!e.target.classList.contains('options-toggle') && !e.target.closest('.options-card')) {
+            document.querySelectorAll('.options-card').forEach(el => {
+                el.style.display = 'none';
+            });
+        }
+    });
+</script>
+
+<style>
+    .options-card {
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .dropdown-item {
+        display: block;
+        padding: 5px 10px;
+        text-decoration: none;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
